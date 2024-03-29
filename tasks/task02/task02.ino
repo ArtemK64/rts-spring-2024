@@ -2,24 +2,19 @@
 
 TaskManager myTaskManager;
 
-int states[5] = {LOW};
-const long intervals[5] = {10000, 1000, 500, 100, 50};
-const int pins[5] = {3, 5, 6, 9, 10};
-
-void togglePin(int index) {
-  states[index] ^= HIGH;
-
-  digitalWrite(pins[index], states[index]);
+void togglePinDirect(uint8_t mask, uint8_t *port) {
+  *port ^= mask;
 }
 
 void setup() {
-  for (int i = 0; i < 5; i++) {
-    pinMode(pins[i], OUTPUT);
-
-    myTaskManager.scheduleFixedRate(intervals[i], [i] {
-      togglePin(i);
-    }, TIME_MICROS);
-  }
+  DDRD |= B00001000 | B00100000 | B01000000;
+  DDRB |= B00000010 | B00000100;
+  
+  myTaskManager.scheduleFixedRate(10000, []() { togglePinDirect(B00001000, &PORTD); }, TIME_MICROS);
+  myTaskManager.scheduleFixedRate(1000, []() { togglePinDirect(B00100000, &PORTD); }, TIME_MICROS);
+  myTaskManager.scheduleFixedRate(500, []() { togglePinDirect(B01000000, &PORTD); }, TIME_MICROS);
+  myTaskManager.scheduleFixedRate(100, []() { togglePinDirect(B00000010, &PORTB); }, TIME_MICROS);
+  myTaskManager.scheduleFixedRate(50, []() { togglePinDirect(B00000100, &PORTB); }, TIME_MICROS);
 }
 
 void loop() {
